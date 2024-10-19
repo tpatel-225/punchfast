@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+    <title>Data view</title>
+</head>
+<body>
+    <h1>List of Stores</h1>
+    <table border="1">
+        <tr>
+            <th>Company</th>
+            <th>Offer</th>
+        </tr>
+        {% for store in stores %}
+        <tr>
+            <td>{{ store.busername }}</td>
+            <td>{{ store.offer }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+    <h1>List of Customers</h1>
+    <table border="1">
+        <tr>
+            <th>Name</th>
+        </tr>
+        {% for customer in customers %}
+        <tr>
+            <td>{{ customer.cusername }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+    <h1>List of punchcards</h1>
+    <table border="1">
+        <tr>
+            <th>Amount</th>
+            <th>Customer</th>
+            <th>Business</th>
+        </tr>
+        {% for punchcard in punchcards %}
+        <tr>
+            <td>{{ punchcard.punches }}</td>
+            <td>{{ punchcard.cusername }}</td>
+            <td>{{ punchcard.busername }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="/business/signin">Businesses</a>
+    <a href="/customer/signin">Customers</a>
+</body>
+</html>
