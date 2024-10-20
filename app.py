@@ -70,9 +70,6 @@ def customer_required(f):
 
 @app.route("/", methods=['GET','POST'])
 def home():
-    if request.method == 'GET':
-        return render_template("homepage.html")
-    
     if request.method == 'POST':
         data = dict(request.form)
         print(data)
@@ -83,6 +80,8 @@ def home():
             results.append(store)
         results.sort(key=lambda store: store.distance)
         return render_template("homepage.html",data=results)
+    
+    return render_template("homepage.html")
 
 
 @app.route("/data")
@@ -163,9 +162,6 @@ def business_signin():
 
 @app.route("/customer/signup", methods=['GET', 'POST'])
 def customer_signup():
-    if request.method == 'GET':
-        return render_template("customer_signup.html")
-    
     if request.method == 'POST':
         data = dict(request.form)
         try:
@@ -176,13 +172,11 @@ def customer_signup():
             return redirect(url_for('customer_punches'))
         except IntegrityError:
             flash("Username taken")
+    
+    return render_template("customer_signup.html")
 
 @app.route("/customer/update", methods=['GET', 'POST'])
 def customer_update():
-
-    if request.method == 'GET':
-        return render_template("customer_update.html",name=session["username"])
-    
     if request.method == 'POST':
         data = dict(request.form)
         try:
@@ -199,9 +193,6 @@ def customer_update():
 
 @app.route("/customer/signin", methods=['GET', 'POST'])
 def customer_signin():
-    if request.method == 'GET':
-        return render_template("customer_signin.html")
-    
     if request.method == 'POST' and request.form["username"]:
         try:
             pw_hash = md5(request.form["password"].encode("utf-8")).hexdigest()
@@ -225,7 +216,7 @@ def punch():
         try:
             customer = Customers.get(Customers.cusername == request.form["username"])
         except Customers.DoesNotExist:
-            return render_template("business_punch.html",message = "Customer doesn't exist")
+            return render_template("business_punch.html",message = "Customer doesn't exist", name=session["username"])
         else:
             try:
                 punchcard = PunchCards.get(
@@ -234,7 +225,7 @@ def punch():
             except PunchCards.DoesNotExist:
                 me = Businesses.get(Businesses.id == session["user_id"])
                 PunchCards.create(business = me, customer = customer, punches = 1)
-                return render_template("business_punch.html",message = "New punch card made")
+                return render_template("business_punch.html",message = "New punch card made", name=session["username"])
 
             else:
                 if punchcard.punches >= 9:
@@ -246,13 +237,10 @@ def punch():
                 query.execute()
                 return render_template("business_punch.html", message = message, name=session["username"])
 
-    return render_template("business_punch.html",message = "Nothing")
+    return render_template("business_punch.html",message = "Nothing", name=session["username"])
 
 @app.route("/customer/punches", methods=['GET','POST'])
 def customer_punches():
-    if request.method == 'GET':
-        return render_template("customer_punches.html",name=session["username"])
-    
     if request.method == 'POST':
         data = dict(request.form)
         print(data)
@@ -264,6 +252,8 @@ def customer_punches():
             results.append(store)
         results.sort(key=lambda store: store.distance)
         return render_template("customer_punches.html",data=results,name=session["username"])
+    
+    return render_template("customer_punches.html",name=session["username"])
 
 @app.route('/logout')
 def logout():
