@@ -10,7 +10,12 @@ db = SqliteDatabase('data.db')
 class Businesses(Model):
     busername = CharField(unique=True)
     bpassword = CharField()
+    businessname = CharField()
     offer = CharField()
+    address = CharField()
+    longitude = DecimalField()
+    latitude = DecimalField()
+    website = CharField()
 
     class Meta:
         database = db
@@ -65,13 +70,21 @@ def customer_required(f):
         return f(*args, **kwargs)
     return inner
 
-@app.route("/")
+@app.route("/", methods=['GET','POST'])
+def home():
+    if request.method == 'GET':
+        return render_template("homepage.html")
+    
+    if request.method == 'POST':
+        print(request.form["latitude"])
+        return render_template("homepage.html")
+
+
 @app.route("/stores")
 def get_stores():
     stores = Businesses.select()
     customers = Customers.select()
     punchcards = PunchCards.select().join(Customers).switch(PunchCards).join(Businesses)
-    print(punchcards)
 
     return render_template("stores.html", stores=stores, customers=customers,punchcards=punchcards)
 
@@ -165,6 +178,7 @@ def punch():
                 return render_template("business_punch.html",message = punchcard.punches)
 
     return render_template("business_punch.html",message = "Nothing")
+
 
 
 

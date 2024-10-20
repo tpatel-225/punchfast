@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+    <title>PunchFAST</title>
+    <script> window.onload = () => {
+    const x = document.getElementById("more")
+    const long = document.getElementById("long")
+    const lat = document.getElementById("lat")
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(getPosition)
+        x.innerHTML = "Click to refresh"
+    } else {
+        x.innerHTML = "Need location permissions"
+    }
+        
+    function getPosition(position) {
+        lat.innerHTML = position.coords.latitude
+        long.innerHTML = position.coords.longitude
+    }
+    } </script>
+</head>
+<body>
+    <a href="/business/signin">Businesses</a>
+    <a href="/customer/signin">Customers</a>
+    <table border="1">
+        <tr>
+            <th>Company</th>
+            <th>Offer</th>
+            <th>Address</th>
+            <th>Website</th>
+        </tr>
+        {% for store in stores %}
+        <tr>
+            <td>{{ store.businessname }}</td>
+            <td>{{ store.offer }}</td>
+            <td>{{ store.address }}</td>
+            <td>{{ store.website }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <form action="/" method="POST">
+        <input type="hidden" name="latitude" id="lat"></input>
+        <input type="hidden" name="logitude" id="long"></input>
+        <button type="submit" id="more"> Need location permissions </button>
+    </form>
+</body>
+</html>

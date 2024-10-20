@@ -40,8 +40,8 @@
         {% for punchcard in punchcards %}
         <tr>
             <td>{{ punchcard.punches }}</td>
-            <td>{{ punchcard.cusername }}</td>
-            <td>{{ punchcard.busername }}</td>
+            <td>{{ punchcard.customer.cusername }}</td>
+            <td>{{ punchcard.business.busername }}</td>
         </tr>
         {% endfor %}
     </table>

@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+    <title>My Punchcards</title>
+</head>
+<body>
+    <h1>My punchcards</h1>
+    <table border="1">
+        <tr>
+            <th>Business</th>
+            <th>Punches</th>
+        </tr>
+        {% for punchcard in punchcards %}
+        <tr>
+            <td>{{ punchcard.business.busername }}</td>
+            <td>{{ punchcard.punches }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
