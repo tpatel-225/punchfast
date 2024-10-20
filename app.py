@@ -173,7 +173,7 @@ def customer_signup():
                 cusername=data["username"],
                 cpassword=md5((data["password"]).encode('utf-8')).hexdigest())
             auth_customer(user)
-            return redirect(url_for('get_stores'))
+            return redirect(url_for('customer_punches'))
         except IntegrityError:
             flash("Username taken")
 
@@ -189,8 +189,9 @@ def customer_update():
             query = Customers.update(
                 cusername=data["username"],
                 cpassword=md5((data["password"]).encode('utf-8')).hexdigest())
+            user = Customers.get(Customers.id == session["user_id"])
             auth_customer(user)
-            return redirect(url_for('get_stores'))
+            return redirect(url_for('customer_punches'))
         except IntegrityError:
             flash("Username taken")
 
@@ -211,7 +212,7 @@ def customer_signin():
             flash("The password entered in incorrect")
         else:
             auth_customer(user)
-            return redirect(url_for("get_stores"))
+            return redirect(url_for("customer_punches"))
 
     return render_template("customer_signin.html")
 
@@ -255,16 +256,14 @@ def customer_punches():
     if request.method == 'POST':
         data = dict(request.form)
         print(data)
-        stores = PunchCards.select().join(Businesses)
+        stores = PunchCards.select().join(Businesses).switch(PunchCards).join(Customers).where(Customers.id == session["user_id"])
         results = []
         for store in stores:
             store.distance = geopy.distance.geodesic((store.business.longitude,store.business.latitude), (float(data["longitude"]),float(data["latitude"]))).miles
+            print(store.punches)
             results.append(store)
-        if data["sortby"] == "punches":
-            results.sort(key=lambda store: store.punches)
-        else:
-            results.sort(key=lambda store: store.distance)
-        return render_template("homepage.html",data=results,name=session["username"])
+        results.sort(key=lambda store: store.distance)
+        return render_template("customer_punches.html",data=results,name=session["username"])
 
 @app.route('/logout')
 def logout():

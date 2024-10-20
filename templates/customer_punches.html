@@ -6,18 +6,6 @@
     const x = document.getElementById("more")
     const long = document.getElementById("long")
     const lat = document.getElementById("lat")
-    const sortbybutton = document.getElementById("sortbybutton")
-    const sortby = document.getElementById("sortby")
-
-    sortby.onclick = (e) => {
-        if(sortby.value=="Sort by distance") {
-            sortbybutton.interHTML="Sort by punches"
-            sortby.value = "punches"
-        } else {
-            sortbybutton.interHTML="Sort by distance"
-            sortby.value = "distance"
-        }
-    }
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(getPosition)
@@ -52,7 +40,6 @@
         </tr>
         {% endfor %}
     </table>
-    <button id="sortbybutton">Sort by distance</button>
     <form action="/customer/punches" method="POST">
         <input type="hidden" name="latitude" id="lat"></input>
         <input type="hidden" name="longitude" id="long"></input>
