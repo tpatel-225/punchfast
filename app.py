@@ -3,7 +3,7 @@ from peewee import *
 from functools import wraps
 from hashlib import md5
 import secrets
-
+import geopy.distance
 
 db = SqliteDatabase('data.db')
 
@@ -12,10 +12,8 @@ class Businesses(Model):
     bpassword = CharField()
     businessname = CharField()
     offer = CharField()
-    address = CharField()
     longitude = DecimalField()
     latitude = DecimalField()
-    website = CharField()
 
     class Meta:
         database = db
@@ -51,7 +49,7 @@ def auth_business(user):
 def auth_customer(user):
     session["logged_in"] = True
     session["user_id"] = user.id
-    session["username"] = user.busername
+    session["username"] = user.cusername
     session["business"] = False
 
 def business_required(f):
@@ -76,11 +74,18 @@ def home():
         return render_template("homepage.html")
     
     if request.method == 'POST':
-        print(request.form["latitude"])
-        return render_template("homepage.html")
+        data = dict(request.form)
+        print(data)
+        stores = Businesses.select()
+        results = []
+        for store in stores:
+            store.distance = geopy.distance.geodesic((store.longitude,store.latitude), (float(data["longitude"]),float(data["latitude"]))).miles
+            results.append(store)
+        results.sort(key=lambda store: store.distance)
+        return render_template("homepage.html",data=results)
 
 
-@app.route("/stores")
+@app.route("/data")
 def get_stores():
     stores = Businesses.select()
     customers = Customers.select()
@@ -88,7 +93,6 @@ def get_stores():
 
     return render_template("stores.html", stores=stores, customers=customers,punchcards=punchcards)
 
-# Create a new pet with a dropdown to select kind
 @app.route("/business/signup", methods=['GET', 'POST'])
 def business_signup():
     if request.method == 'GET':
@@ -96,11 +100,47 @@ def business_signup():
     
     if request.method == 'POST':
         data = dict(request.form)
-        Businesses.create(
-            busername=data["username"],
-            bpassword=md5((data["password"]).encode('utf-8')).hexdigest(),
-            offer=data["offer"])
-        return redirect(url_for('get_stores'))
+        try:
+            with db.atomic():
+                user = Businesses.create(
+                    busername=data["username"],
+                    bpassword=md5((data["password"]).encode('utf-8')).hexdigest(),
+                    businessname = data["businessname"],
+                    offer=data["offer"],
+                    longitude = data["longitude"],
+                    latitude = data["latitude"])
+                auth_business(user)
+                return redirect(url_for('punch'))
+        except IntegrityError:
+            flash("That username is already taken")
+    
+    return render_template("business_signup.html")
+    
+@app.route("/business/update", methods=['GET', 'POST'])
+def business_update():
+    user = Businesses.get(Businesses.id == session["user_id"])
+
+    if request.method == 'GET':
+        return render_template("business_update.html", user=user, name=session["username"])
+    
+    if request.method == 'POST':
+        data = dict(request.form)
+        try:
+            query = Businesses.update(
+                busername=data["username"],
+                bpassword=md5((data["password"]).encode('utf-8')).hexdigest(),
+                businessname = data["businessname"],
+                offer=data["offer"],
+                longitude = data["longitude"],
+                latitude = data["latitude"]).where(Businesses.id == session["user_id"])
+            query.execute()
+            user = Businesses.get(Businesses.busername == data["username"])
+            auth_business(user)
+            return redirect(url_for('punch'))
+        except IntegrityError:
+            flash("Username taken")
+
+    return render_template("business_update.html", user=user, name=session["username"])
 
 @app.route("/business/signin", methods=['GET', 'POST'])
 def business_signin():
@@ -128,10 +168,33 @@ def customer_signup():
     
     if request.method == 'POST':
         data = dict(request.form)
-        Customers.create(
-            cusername=data["username"],
-            cpassword=md5((data["password"]).encode('utf-8')).hexdigest())
-        return redirect(url_for('get_stores'))
+        try:
+            user = Customers.create(
+                cusername=data["username"],
+                cpassword=md5((data["password"]).encode('utf-8')).hexdigest())
+            auth_customer(user)
+            return redirect(url_for('get_stores'))
+        except IntegrityError:
+            flash("Username taken")
+
+@app.route("/customer/update", methods=['GET', 'POST'])
+def customer_update():
+
+    if request.method == 'GET':
+        return render_template("customer_update.html",name=session["username"])
+    
+    if request.method == 'POST':
+        data = dict(request.form)
+        try:
+            query = Customers.update(
+                cusername=data["username"],
+                cpassword=md5((data["password"]).encode('utf-8')).hexdigest())
+            auth_customer(user)
+            return redirect(url_for('get_stores'))
+        except IntegrityError:
+            flash("Username taken")
+
+    return render_template("customer_update.html",name=session["username"])
 
 @app.route("/customer/signin", methods=['GET', 'POST'])
 def customer_signin():
@@ -156,7 +219,7 @@ def customer_signin():
 @business_required
 def punch():
     if request.method == 'GET':
-        return render_template("business_punch.html")
+        return render_template("business_punch.html",name=session["username"])
     if request.method == 'POST' and request.form["username"]:
         try:
             customer = Customers.get(Customers.cusername == request.form["username"])
@@ -173,13 +236,41 @@ def punch():
                 return render_template("business_punch.html",message = "New punch card made")
 
             else:
-                query = PunchCards.update(punches=PunchCards.punches+1).where(PunchCards.id == punchcard.id)
+                if punchcard.punches >= 9:
+                    query = PunchCards.update(punches=0).where(PunchCards.id == punchcard.id)
+                    message = "Punchcard completed!"
+                else:
+                    query = PunchCards.update(punches=PunchCards.punches+1).where(PunchCards.id == punchcard.id)
+                    message = str(9-punchcard.punches) + " punches until prize!"
                 query.execute()
-                return render_template("business_punch.html",message = punchcard.punches)
+                return render_template("business_punch.html", message = message, name=session["username"])
 
     return render_template("business_punch.html",message = "Nothing")
 
+@app.route("/customer/punches", methods=['GET','POST'])
+def customer_punches():
+    if request.method == 'GET':
+        return render_template("customer_punches.html",name=session["username"])
+    
+    if request.method == 'POST':
+        data = dict(request.form)
+        print(data)
+        stores = PunchCards.select().join(Businesses)
+        results = []
+        for store in stores:
+            store.distance = geopy.distance.geodesic((store.business.longitude,store.business.latitude), (float(data["longitude"]),float(data["latitude"]))).miles
+            results.append(store)
+        if data["sortby"] == "punches":
+            results.sort(key=lambda store: store.punches)
+        else:
+            results.sort(key=lambda store: store.distance)
+        return render_template("homepage.html",data=results,name=session["username"])
 
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    flash('You were logged out')
+    return redirect(url_for('home'))
 
 
 if __name__ == "__main__":

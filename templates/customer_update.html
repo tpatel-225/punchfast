@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<head>
+    <title>Customer Update</title>
+</head>
+<body>
+    <p>Logged in as {{name}}</p>
+    <h1>Customer Update</h1>
+    <form action="/customer/update" method="POST">
+        <p>Username: <input name="username" value={{name}} required /></p>
+        <p>Password: <input name="password" required /></p>
+        <button type="submit">sign up</button>
+    </form>
+    <br>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+    <title>PunchFAST</title>
+    <script> window.onload = () => {
+    const x = document.getElementById("more")
+    const long = document.getElementById("long")
+    const lat = document.getElementById("lat")
+    const sortbybutton = document.getElementById("sortbybutton")
+    const sortby = document.getElementById("sortby")
+
+    sortby.onclick = (e) => {
+        if(sortby.value=="Sort by distance") {
+            sortbybutton.interHTML="Sort by punches"
+            sortby.value = "punches"
+        } else {
+            sortbybutton.interHTML="Sort by distance"
+            sortby.value = "distance"
+        }
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(getPosition)
+        x.innerHTML = "Click to refresh"
+    } else {
+        x.innerHTML = "Need location permissions"
+    }
+        
+    function getPosition(position) {
+        lat.value = position.coords.latitude
+        long.value = position.coords.longitude
+    }
+    } </script>
+</head>
+<body>
+    <p>Signed in as {{name}}</p>
+    <a href="/customer/update">update account</a>
+    <a href="/logout">logout</a>
+    <table border="1">
+        <tr>
+            <th>Punches</th>
+            <th>Company</th>
+            <th>Offer</th>
+            <th>Distance</th>
+        </tr>
+        {% for dat in data %}
+        <tr>
+            <td>{{ dat.punches }}</td>
+            <td>{{ dat.business.businessname }}</td>
+            <td>{{ dat.business.offer }}</td>
+            <td>{{ dat.distance }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <button id="sortbybutton">Sort by distance</button>
+    <form action="/customer/punches" method="POST">
+        <input type="hidden" name="latitude" id="lat"></input>
+        <input type="hidden" name="longitude" id="long"></input>
+        <input type="hidden" value="distance" name="sortby" id="sortby"></input>
+        <button type="submit" id="more"> Need location permissions </button>
+    </form>
+</body>
+</html>

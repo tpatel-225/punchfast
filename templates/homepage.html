@@ -14,8 +14,8 @@
     }
         
     function getPosition(position) {
-        lat.innerHTML = position.coords.latitude
-        long.innerHTML = position.coords.longitude
+        lat.value = position.coords.latitude
+        long.value = position.coords.longitude
     }
     } </script>
 </head>
@@ -26,21 +26,19 @@
         <tr>
             <th>Company</th>
             <th>Offer</th>
-            <th>Address</th>
-            <th>Website</th>
+            <th>Distance</th>
         </tr>
-        {% for store in stores %}
+        {% for dat in data %}
         <tr>
-            <td>{{ store.businessname }}</td>
-            <td>{{ store.offer }}</td>
-            <td>{{ store.address }}</td>
-            <td>{{ store.website }}</td>
+            <td>{{ dat.businessname }}</td>
+            <td>{{ dat.offer }}</td>
+            <td>{{ dat.distance }}</td>
         </tr>
         {% endfor %}
     </table>
     <form action="/" method="POST">
         <input type="hidden" name="latitude" id="lat"></input>
-        <input type="hidden" name="logitude" id="long"></input>
+        <input type="hidden" name="longitude" id="long"></input>
         <button type="submit" id="more"> Need location permissions </button>
     </form>
 </body>

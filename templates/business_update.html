@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+    <title>Business Update</title>
+    <script> window.onload = () => {
+        const x = document.getElementById("send")
+        const long = document.getElementById("long")
+        const lat = document.getElementById("lat")
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(getPosition)
+            x.innerHTML = "sign up"
+        } else {
+            x.innerHTML = "need location permissions"
+        }
+            
+        function getPosition(position) {
+            lat.value = position.coords.latitude
+            long.value = position.coords.longitude
+        }
+        } </script>
+</head>
+<body>
+    <p>Signed in as {{name}}</p>
+    <h1>Business update</h1>
+    <form action="/business/update" method="POST">
+        <p>Username: <input name="username" value={{user.busername}} required /></p>
+        <p>Password: <input name="password" required /></p>
+        <p>Business name: <input name="businessname" value={{user.businessname}} required /></p>
+        <p>Offer: <input name="offer" value={{user.offer}} required /></p>
+        <input type="hidden" name="latitude" id="lat" required></input>
+        <input type="hidden" name="longitude" id="long" required></input>
+        <button type="submit" id="send">sign up</button>
+    </form>
+    <p>Uses your current location as store location</p>
+</body>
+</html>
